@@ -67,7 +67,7 @@
 ### Build Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/lingolens-android.git
+   git clone https://github.com/piyushkumar920/lingolens-android.git
    ```
 2. Open the project in Android Studio.
 3. Sync Gradle and run the app on an emulator or physical device.
