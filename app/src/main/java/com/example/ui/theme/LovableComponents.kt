@@ -11,12 +11,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -71,7 +75,7 @@ fun LovableCard(
 }
 
 /**
- * Lovable Primary Dark Button (#1c1c1c bg, #fcfbf8 text, 6px radius, inset shadow).
+ * Mastercard Primary Ink Pill Button (#141413 bg, #F3F0EE text, 20px radius).
  */
 @Composable
 fun LovablePrimaryButton(
@@ -86,20 +90,70 @@ fun LovablePrimaryButton(
             .smoothButtonPress()
             .lovableButtonShadow(),
         enabled = enabled,
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = LovableCharcoal,
-            contentColor = LovableOffWhite,
+            contentColor = LovableCream,
             disabledContainerColor = LovableCharcoal.copy(alpha = 0.5f),
-            disabledContentColor = LovableOffWhite.copy(alpha = 0.5f)
+            disabledContentColor = LovableCream.copy(alpha = 0.5f)
         ),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         content = content
     )
 }
 
 /**
- * Lovable Outline / Ghost Button (transparent bg, 1px solid interactive border, 6px radius).
+ * Mastercard Consent / Signal Orange Pill Button (#CF4500 bg, #FFFFFF text, 24px radius).
+ */
+@Composable
+fun MastercardConsentButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.smoothButtonPress(),
+        shape = RoundedCornerShape(24.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = SignalOrange,
+            contentColor = Color.White
+        ),
+        contentPadding = PaddingValues(horizontal = 30.dp, vertical = 10.dp),
+        content = content
+    )
+}
+
+/**
+ * Mastercard Eyebrow Label with tiny accent dot + uppercase bold tracking.
+ */
+@Composable
+fun MastercardEyebrow(
+    text: String,
+    modifier: Modifier = Modifier,
+    dotColor: Color = LightSignalOrange
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(dotColor)
+        )
+        androidx.compose.material3.Text(
+            text = text.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = LovableCharcoal
+        )
+    }
+}
+
+/**
+ * Lovable Outline / Ghost Button (transparent bg, 1.5px solid ink black border, 20px radius).
  */
 @Composable
 fun LovableOutlineButton(
@@ -112,15 +166,15 @@ fun LovableOutlineButton(
         onClick = onClick,
         modifier = modifier.smoothButtonPress(),
         enabled = enabled,
-        shape = RoundedCornerShape(6.dp),
-        border = BorderStroke(1.dp, LovableInteractiveBorder),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.5f.dp, LovableCharcoal),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
             contentColor = LovableCharcoal,
             disabledContainerColor = Color.Transparent,
             disabledContentColor = LovableCharcoal.copy(alpha = 0.4f)
         ),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
         content = content
     )
 }

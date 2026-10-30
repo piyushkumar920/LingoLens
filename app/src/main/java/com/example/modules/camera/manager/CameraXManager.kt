@@ -2,6 +2,7 @@ package com.example.modules.camera.manager
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.util.Log
 import androidx.camera.core.Camera
@@ -252,57 +253,78 @@ class CameraXManager(
         onError: (Throwable) -> Unit
     ) {
         val capture = imageCapture ?: run {
-            onError(IllegalStateException("ImageCapture is not initialized"))
+            onError(IllegalStateException("ImageCapture is not initialized or camera is closed"))
             return
         }
 
         _uiState.update { it.copy(isCapturing = true) }
 
-        capture.takePicture(
-            captureExecutor,
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    try {
-                        val rotationDegrees = image.imageInfo.rotationDegrees
-                        val bitmap = image.toBitmap()
-                        val rotatedBitmap = if (rotationDegrees != 0) {
-                            val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
-                            Bitmap.createBitmap(
-                                bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
-                            )
-                        } else {
-                            bitmap
-                        }
+        try {
+            capture.takePicture(
+                captureExecutor,
+                object : ImageCapture.OnImageCapturedCallback() {
+                    override fun onCaptureSuccess(image: ImageProxy) {
+                        try {
+                            val rotationDegrees = image.imageInfo.rotationDegrees
+                            val buffer = image.planes[0].buffer
+                            val bytes = ByteArray(buffer.remaining())
+                            buffer.get(bytes)
+                            val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 
-                        scope.launch {
-                            _uiState.update { it.copy(isCapturing = false) }
-                            onSuccess(rotatedBitmap)
+                            if (bitmap != null) {
+                                val rotatedBitmap = if (rotationDegrees != 0) {
+                                    val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+                                    Bitmap.createBitmap(
+                                        bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
+                                    )
+                                } else {
+                                    bitmap
+                                }
+
+                                scope.launch(Dispatchers.Main) {
+                                    _uiState.update { it.copy(isCapturing = false) }
+                                    onSuccess(rotatedBitmap)
+                                }
+                            } else {
+                                scope.launch(Dispatchers.Main) {
+                                    _uiState.update { it.copy(isCapturing = false) }
+                                    onError(IllegalStateException("Failed to decode captured image bitmap"))
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(tag, "Error processing captured ImageProxy", e)
+                            scope.launch(Dispatchers.Main) {
+                                _uiState.update { it.copy(isCapturing = false) }
+                                onError(e)
+                            }
+                        } finally {
+                            try {
+                                image.close()
+                            } catch (e: Exception) {
+                                Log.w(tag, "Error closing ImageProxy", e)
+                            }
                         }
-                    } catch (e: Exception) {
-                        Log.e(tag, "Error converting ImageProxy to Bitmap", e)
-                        scope.launch {
-                            _uiState.update { it.copy(isCapturing = false) }
-                            onError(e)
+                    }
+
+                    override fun onError(exception: ImageCaptureException) {
+                        Log.e(tag, "Image capture failed: ${exception.message}", exception)
+                        scope.launch(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    isCapturing = false,
+                                    errorMessage = "Camera capture failed: ${exception.localizedMessage}"
+                                )
+                            }
+                            onError(exception)
                         }
-                    } finally {
-                        image.close()
                     }
                 }
-
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e(tag, "Image capture failed", exception)
-                    scope.launch {
-                        _uiState.update {
-                            it.copy(
-                                isCapturing = false,
-                                errorMessage = "Capture error: ${exception.localizedMessage}"
-                            )
-                        }
-                        onError(exception)
-                    }
-                }
-            }
-        )
+            )
+        } catch (e: Exception) {
+            Log.e(tag, "Exception during takePicture", e)
+            _uiState.update { it.copy(isCapturing = false, errorMessage = "Capture error: ${e.localizedMessage}") }
+            onError(e)
+        }
     }
 
     /**
