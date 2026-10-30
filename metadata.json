@@ -1,0 +1,6 @@
+{
+  "name": "LingoLens",
+  "description": "Smart camera lens and voice translator for instant real-time translation of signs, menus, speech, and text.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
